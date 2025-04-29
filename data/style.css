@@ -1,0 +1,456 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    line-height: 1.6;
+    background-color: #f4f4f4;
+}
+
+.container {
+    display: flex;
+    min-height: 100vh;
+    position: relative;
+}
+
+.main-content {
+    flex: 1;
+    position: relative;
+    padding: 20px;
+    min-height: 100vh;
+}
+
+nav {
+    width: 200px;
+    background-color: #333;
+    padding: 20px 0;
+    position: sticky;
+    top: 0;
+    align-self: flex-start;
+    height: 100%;
+    min-height: 100vh;
+}
+
+.logo {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    z-index: 1;
+}
+
+.logo img {
+    max-width: 260px;
+    height: auto;
+}
+
+nav ul {
+    list-style: none;
+}
+
+nav a {
+    color: white;
+    text-decoration: none;
+    padding: 10px 20px;
+    display: block;
+}
+
+nav a:hover, nav a.active {
+    background-color: #555;
+}
+
+.page {
+    display: none;
+}
+
+.page.active {
+    display: block;
+}
+
+h1 {
+    margin-bottom: 20px;
+    color: #333;
+}
+
+.settings-section {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+}
+
+.form-group {
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    vertical-align: middle;
+}
+
+.form-group label {
+    width: 150px;
+    margin-right: 1rem;
+    display: block;
+    color: #555;
+}
+
+.form-group input[type=text],
+.form-group input[type=number],
+.form-group input[type=date],
+.form-group input[type=time],
+.form-group input[type=password],
+.form-group select {
+    flex: 1;
+    max-width: 250px;
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-family: inherit;
+    font-size: 14px;
+}
+
+.form-group input[type=checkbox] {
+    width: auto;
+    margin-left: 0;
+    height: 18px;
+    width: 18px;
+}
+
+.form-group select {
+    background-color: #fff;
+    height: 36px;
+}
+
+.form-group input[disabled] {
+    background-color: #e9ecef;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.live-clock {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+#liveClock {
+    font-family: monospace;
+    font-size: 1.5em;
+    font-weight: bold;
+    color: #333;
+}
+
+.static-value {
+    display: inline-block;
+    padding: 8px 10px;
+    background-color: #f5f5f5;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-family: monospace;
+    min-width: 250px;
+    max-width: 250px;
+    font-size: 14px;
+    height: 36px;
+}
+
+.btn {
+    background-color: #2196F3;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-top: 1rem;
+    margin-left: 150px;
+    min-width: 250px;
+    max-width: 250px;
+}
+
+.btn:hover {
+    background-color: #1976D2;
+}
+
+.hidden {
+    display: none;
+}
+
+#staticSettings.hidden {
+    display: none;
+}
+
+.ntp-status {
+    display: inline-block;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-weight: bold;
+    margin-left: 5px;
+    min-width: 250px;
+    max-width: 250px;
+}
+
+.ntp-status-current {
+    background-color: #4CAF50;
+    color: white;
+}
+
+.ntp-status-stale {
+    background-color: #FF9800;
+    color: white;
+}
+
+.ntp-status-failed {
+    background-color: #F44336;
+    color: white;
+}
+
+#lastNtpUpdate {
+    margin-left: 5px;
+}
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s, visibility 0.3s;
+}
+
+.modal-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.confirmation-modal {
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    padding: 25px;
+    width: 90%;
+    max-width: 450px;
+    transform: translateY(-20px);
+    transition: transform 0.3s;
+}
+
+.modal-overlay.active .confirmation-modal {
+    transform: translateY(0);
+}
+
+.confirmation-modal h3 {
+    margin-top: 0;
+    color: #333;
+    font-size: 1.3em;
+}
+
+.confirmation-modal p {
+    color: #555;
+    margin-bottom: 25px;
+}
+
+.modal-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 15px;
+}
+
+.modal-buttons button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.95em;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.modal-cancel {
+    background-color: #e0e0e0;
+    color: #333;
+}
+
+.modal-cancel:hover {
+    background-color: #d0d0d0;
+}
+
+.modal-confirm {
+    background-color: #f44336;
+    color: white;
+}
+
+.modal-confirm:hover {
+    background-color: #d32f2f;
+}
+
+.status-message {
+    margin-top: 10px;
+    padding: 10px;
+    border-radius: 4px;
+    text-align: center;
+    font-weight: bold;
+}
+
+.status.ok {
+    background-color: #defbe6;
+    color: #0e8521;
+}
+
+.status.error {
+    background-color: #ffebeb;
+    color: #e60000;
+}
+
+.status.warning {
+    background-color: #fff8e1;
+    color: #ff9800;
+}
+
+.toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+    max-width: 350px;
+}
+
+.toast {
+    background-color: #fff;
+    color: #333;
+    padding: 15px 20px;
+    border-radius: 4px;
+    margin-bottom: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    animation: slideIn 0.3s ease-out forwards;
+    overflow: hidden;
+}
+
+.toast::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 5px;
+}
+
+.toast-success {
+    border-left: 5px solid #4CAF50;
+}
+
+.toast-success::before {
+    background-color: #4CAF50;
+}
+
+.toast-error {
+    border-left: 5px solid #F44336;
+}
+
+.toast-error::before {
+    background-color: #F44336;
+}
+
+.toast-info {
+    border-left: 5px solid #2196F3;
+}
+
+.toast-info::before {
+    background-color: #2196F3;
+}
+
+.toast-icon {
+    margin-right: 10px;
+    font-size: 20px;
+}
+
+.toast-content {
+    flex: 1;
+}
+
+.toast-title {
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.toast-message {
+    font-size: 14px;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOut {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
+
+.toast-exit {
+    animation: slideOut 0.3s ease-in forwards;
+}
+
+/* GitHub repository link styles */
+.github-link-container {
+    margin-left: 0;
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    background-color: #242424;
+    color: #ffffff;
+    padding: 8px;
+    display: flex;
+    justify-content: center;
+}
+
+.footer-info {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.version-info {
+    font-size: 16px;
+}
+
+.github-link {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.github-link:hover {
+    color: var(--primary-hover);
+    text-decoration: underline;
+}
+
+.github-link .github-icon {
+    vertical-align: middle;
+    margin-left: 20px 0;
+}

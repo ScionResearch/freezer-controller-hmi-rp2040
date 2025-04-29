@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <title>Freezer Controller</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <nav>
+            <ul>
+                <li><a href="#" class="active" data-page="dashboard">Dashboard</a></li>
+                <li><a href="#" data-page="settings">Settings</a></li>
+            </ul>
+        </nav>
+        
+        <div class="main-content">
+            <div class="logo">
+                <img src="Scion-Logo-260x65.png" alt="Scion Logo">
+            </div>
+            
+            <!-- Toast notification container -->
+            <div id="toastContainer" class="toast-container"></div>
+            
+            <!-- Reboot Confirmation Modal -->
+            <div id="rebootModal" class="modal-overlay">
+                <div class="confirmation-modal">
+                    <h3>Confirm System Reboot</h3>
+                    <p>Are you sure you want to reboot the system? All ongoing operations will be interrupted.</p>
+                    <div class="modal-buttons">
+                        <button id="cancelReboot" class="modal-cancel">Cancel</button>
+                        <button id="confirmReboot" class="modal-confirm">Yes, Reboot</button>
+                    </div>
+                </div>
+            </div>
+
+            <main>
+                <div id="dashboard" class="page active">
+                    <h1>Freezer Controller Dashboard v1.0</h1>
+                </div>
+
+                <div id="settings" class="page">
+                    <h1>System Settings</h1>
+                    <div class="settings-section">
+                        <h2>Date and Time</h2>
+                        <div class="live-clock">
+                            <span id="liveClock"></span>
+                        </div>
+                        <div class="form-group">
+                            <label for="currentDate">Change Date:</label>
+                            <input type="date" id="currentDate" pattern="\d{4}-\d{2}-\d{2}">
+                        </div>
+                        <div class="form-group">
+                            <label for="currentTime">Change Time:</label>
+                            <input type="time" id="currentTime" step="1">
+                        </div>
+                        <div class="form-group">
+                            <label for="timezone">Timezone:</label>
+                            <select id="timezone">
+                                <option value="-12:00">UTC-12:00 (Baker Island)</option>
+                                <option value="-11:00">UTC-11:00 (American Samoa)</option>
+                                <option value="-10:00">UTC-10:00 (Hawaii)</option>
+                                <option value="-09:30">UTC-09:30 (Marquesas Islands)</option>
+                                <option value="-09:00">UTC-09:00 (Alaska)</option>
+                                <option value="-08:00">UTC-08:00 (Pacific Time)</option>
+                                <option value="-07:00">UTC-07:00 (Mountain Time)</option>
+                                <option value="-06:00">UTC-06:00 (Central Time)</option>
+                                <option value="-05:00">UTC-05:00 (Eastern Time)</option>
+                                <option value="-04:00">UTC-04:00 (Atlantic Time)</option>
+                                <option value="-03:30">UTC-03:30 (Newfoundland)</option>
+                                <option value="-03:00">UTC-03:00 (Brazil, Argentina)</option>
+                                <option value="-02:00">UTC-02:00 (South Georgia)</option>
+                                <option value="-01:00">UTC-01:00 (Cape Verde)</option>
+                                <option value="+00:00">UTC+00:00 (London, Dublin)</option>
+                                <option value="+01:00">UTC+01:00 (Paris, Berlin)</option>
+                                <option value="+02:00">UTC+02:00 (Cairo, Athens)</option>
+                                <option value="+03:00">UTC+03:00 (Moscow, Istanbul)</option>
+                                <option value="+03:30">UTC+03:30 (Tehran)</option>
+                                <option value="+04:00">UTC+04:00 (Dubai)</option>
+                                <option value="+04:30">UTC+04:30 (Kabul)</option>
+                                <option value="+05:00">UTC+05:00 (Karachi)</option>
+                                <option value="+05:30">UTC+05:30 (India)</option>
+                                <option value="+05:45">UTC+05:45 (Nepal)</option>
+                                <option value="+06:00">UTC+06:00 (Dhaka)</option>
+                                <option value="+06:30">UTC+06:30 (Yangon)</option>
+                                <option value="+07:00">UTC+07:00 (Bangkok)</option>
+                                <option value="+08:00">UTC+08:00 (Singapore, Beijing)</option>
+                                <option value="+08:45">UTC+08:45 (Eucla)</option>
+                                <option value="+09:00">UTC+09:00 (Tokyo)</option>
+                                <option value="+09:30">UTC+09:30 (Adelaide)</option>
+                                <option value="+10:00">UTC+10:00 (Sydney)</option>
+                                <option value="+10:30">UTC+10:30 (Lord Howe Island)</option>
+                                <option value="+11:00">UTC+11:00 (Solomon Islands)</option>
+                                <option value="+12:00">UTC+12:00 (Auckland)</option>
+                                <option value="+12:45">UTC+12:45 (Chatham Islands)</option>
+                                <option value="+13:00">UTC+13:00 (Nuku'alofa)</option>
+                                <option value="+14:00">UTC+14:00 (Kiritimati)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="enableNTP">Enable NTP</label>
+                            <input type="checkbox" id="enableNTP">
+                        </div>
+                        <div id="ntpStatusContainer" class="form-group" style="display: none;">
+                            <div class="form-group">
+                                <label>NTP Status:</label>
+                                <span id="ntpStatus" class="static-value"></span>
+                            </div>
+                            <div class="form-group">
+                                <label>Last Update:</label>
+                                <span id="lastNtpUpdate" class="static-value"></span>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="enableDST">Daylight Saving Time</label>
+                            <input type="checkbox" id="enableDST">
+                        </div>
+                        <button id="saveTimeBtn" class="btn btn-primary">Save Date and Time Settings</button>
+                    </div>
+                    <div class="settings-section">
+                        <h2>Network Configuration</h2>
+                        <form id="networkForm">
+                            <div class="form-group">
+                                <label>IP Configuration:</label>
+                                <select id="ipConfig">
+                                    <option value="dhcp">DHCP</option>
+                                    <option value="static">Static IP</option>
+                                </select>
+                            </div>
+                            <div id="staticSettings" style="display: none;">
+                                <div class="form-group">
+                                    <label>IP Address:</label>
+                                    <input type="text" id="ipAddress" 
+                                           pattern="^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$"
+                                           placeholder="192.168.1.100"
+                                           title="Please enter a valid IPv4 address">
+                                </div>
+                                <div class="form-group">
+                                    <label>Subnet Mask:</label>
+                                    <input type="text" id="subnetMask" 
+                                           pattern="^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$"
+                                           placeholder="255.255.255.0"
+                                           title="Please enter a valid subnet mask">
+                                </div>
+                                <div class="form-group">
+                                    <label>Gateway:</label>
+                                    <input type="text" id="gateway" 
+                                           pattern="^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$"
+                                           placeholder="192.168.1.1"
+                                           title="Please enter a valid gateway address">
+                                </div>
+                                <div class="form-group">
+                                    <label>DNS Server:</label>
+                                    <input type="text" id="dns" 
+                                           pattern="^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$"
+                                           placeholder="8.8.8.8"
+                                           title="Please enter a valid DNS server address">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="macAddress">MAC Address:</label>
+                                <span id="macAddress" class="static-value"></span>
+                            </div>
+                            <div class="form-group">
+                                <label for="currentIP">Current IP Address:</label>
+                                <span id="currentIP" class="static-value"></span>
+                            </div>
+                            <div class="form-group">
+                                <label for="hostName">Hostname:</label>
+                                <input type="text" id="hostName" value="freezer-control">
+                            </div>
+                            <div class="form-group">
+                                <label for="ntpServer">NTP Server:</label>
+                                <input type="text" id="ntpServer" value="pool.ntp.org">
+                            </div>
+                            <button type="submit" id="saveNetworkSettings" class="btn">Save Network Settings</button>
+                            <div id="networkStatus" class="status-message"></div>
+                        </form>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    <div class="github-link-container">
+        <div class="footer-info">
+            <span class="version-info">Freezer Control System V1.0.0</span>
+            <a href="https://github.com/ScionResearch/freezer-controller-hmi-rp2040" target="_blank" class="github-link">
+                <svg class="github-icon" viewBox="0 0 16 16" width="16" height="16">
+                    <path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/>
+                </svg>
+                View Documentation on GitHub
+            </a>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
