@@ -8,15 +8,16 @@ bool sensorAlarm = false;
 uint16_t holdingRegisters[100];
 
 bool sensorInit(void) {
-    Serial.println("Starting Modbus interface to sensor...");
     Serial2.setTX(PIN_RS485_TX);
     Serial2.setRX(PIN_RS485_RX);
+    Serial2.setFIFOSize(128);
     bus.begin(MODBUS_BAUD);
-    return manageSensor();
+    return bus.readHoldingRegisters(SENSOR_SLAVE_ID, 0, holdingRegisters, 1);
 }
 
 bool manageSensor(void) {
-    if (!bus.readHoldingRegisters(SENSOR_SLAVE_ID, 0, holdingRegisters, 22)) {
+    bool success = bus.readHoldingRegisters(SENSOR_SLAVE_ID, 0, holdingRegisters, 22);
+    if (!success) {
         sensorAlarm = true;
         setAlarmState();
         return false;

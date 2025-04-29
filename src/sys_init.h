@@ -53,3 +53,5 @@
 #include "ui/screenMain.h"
 #include "sensor/sensor.h"
 #include "control/control.h"
+
+extern volatile bool debug;

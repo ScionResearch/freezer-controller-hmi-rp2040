@@ -120,7 +120,7 @@ void setupWebServer()
   // Initialize LittleFS for serving web files
   if (!LittleFS.begin())
   {
-    Serial.printf("LittleFS Mount Failed\n");
+    if (debug) Serial.printf("LittleFS Mount Failed\n");
     return;
   }
 
@@ -136,7 +136,7 @@ void setupWebServer()
     delay(500);
     
     // Log the reboot
-    Serial.printf("System reboot requested via web interface\n");
+    if (debug) Serial.printf("System reboot requested via web interface\n");
 
     delay(1000);
     
@@ -149,7 +149,7 @@ void setupWebServer()
                     { handleFile(server.uri().c_str()); });
 
   server.begin();
-  Serial.printf("HTTP server started\n");
+  if (debug) Serial.printf("HTTP server started\n");
 }
 
 void setupTimeAPI()
@@ -226,25 +226,25 @@ void setupTimeAPI()
         String json = server.arg("plain");
         DeserializationError error = deserializeJson(doc, json);
 
-        Serial.printf("Received JSON: %s\n", json.c_str());
+        if (debug) Serial.printf("Received JSON: %s\n", json.c_str());
         
         if (error) {
             server.send(400, "application/json", "{\"error\":\"Invalid JSON\"}");
-            Serial.printf("JSON parsing error: %s\n", error.c_str());
+            if (debug) Serial.printf("JSON parsing error: %s\n", error.c_str());
             return;
         }
 
         // Validate required fields
         if (!doc.containsKey("date") || !doc.containsKey("time")) {
             server.send(400, "application/json", "{\"error\":\"Missing required fields\"}");
-            Serial.printf("Missing required fields in JSON\n");
+            if (debug) Serial.printf("Missing required fields in JSON\n");
             return;
         }
 
         // Update timezone if provided
         if (doc.containsKey("timezone")) {
           const char* tz = doc["timezone"];
-          Serial.printf("Received timezone: %s\n", tz);
+          if (debug) Serial.printf("Received timezone: %s\n", tz);
           // Basic timezone format validation (+/-HH:MM)
           int tzHour, tzMin;
           if (sscanf(tz, "%d:%d", &tzHour, &tzMin) != 2 ||
@@ -254,7 +254,7 @@ void setupTimeAPI()
           }
           strncpy(networkConfig.timezone, tz, sizeof(networkConfig.timezone) - 1);
           networkConfig.timezone[sizeof(networkConfig.timezone) - 1] = '\0';
-          Serial.printf("Updated timezone: %s\n", networkConfig.timezone);
+          if (debug) Serial.printf("Updated timezone: %s\n", networkConfig.timezone);
         }
 
         // Update NTP enabled status if provided
@@ -288,7 +288,7 @@ void setupTimeAPI()
         if (sscanf(dateStr, "%hu-%hhu-%hhu", &year, &month, &day) != 3 ||
             year < 2000 || year > 2099 || month < 1 || month > 12 || day < 1 || day > 31) {
             server.send(400, "application/json", "{\"error\": \"Invalid date format or values\"}");
-            Serial.printf("Invalid date format or values in JSON\n");
+            if (debug) Serial.printf("Invalid date format or values in JSON\n");
             return;
         }
 

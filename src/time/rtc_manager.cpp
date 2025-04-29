@@ -16,7 +16,7 @@ void init_rtc(void) {
 
   if (!rtc.begin())
   {
-    Serial.printf( "RTC initialization failed!\n");
+    if (debug) Serial.printf( "RTC initialization failed!\n");
     return;
   }
 
@@ -24,10 +24,10 @@ void init_rtc(void) {
   DateTime now;
   rtc.getDateTime(&now);
   memcpy(&globalDateTime, &now, sizeof(DateTime)); // Initialize global DateTime directly
-  Serial.printf("Current date and time is: %04d-%02d-%02d %02d:%02d:%02d\n",
+  if (debug) Serial.printf("Current date and time is: %04d-%02d-%02d %02d:%02d:%02d\n",
                 now.year, now.month, now.day, now.hour, now.minute, now.second);
                 
-  Serial.printf("RTC update task started\n");
+  if (debug) Serial.printf("RTC update task started\n");
   lastTimeUpdate = millis();
 }
 
@@ -42,7 +42,7 @@ void manageTime(void)
     dateTimeLocked = false;
   } else {
     dateTimeLocked = false;
-    Serial.printf("Failed to read time from RTC\n");
+    if (debug) Serial.printf("Failed to read time from RTC\n");
   }
   lastTimeUpdate += TIME_UPDATE_INTERVAL;  
 }
@@ -74,7 +74,7 @@ bool getGlobalDateTime(DateTime &dt, uint32_t timeout) {
 // Function to safely update the DateTime
 bool updateGlobalDateTime(const DateTime &dt) {
   if (dateTimeWriteLocked) {
-    Serial.printf("Failed to update time: DateTime write lock is active - can't handle multiple simultaneous updates\n");
+    if (debug) Serial.printf("Failed to update time: DateTime write lock is active - can't handle multiple simultaneous updates\n");
     return false;
   }
   dateTimeWriteLocked = true;
@@ -82,7 +82,7 @@ bool updateGlobalDateTime(const DateTime &dt) {
   const int retryDelayMs = 100; // Delay between retries (milliseconds)
   bool success = false;
   for (int retry = 0; retry < maxRetries; ++retry) {
-      Serial.printf("Attempt %d: Setting RTC to: %04d-%02d-%02d %02d:%02d:%02d\n",
+      if (debug) Serial.printf("Attempt %d: Setting RTC to: %04d-%02d-%02d %02d:%02d:%02d\n",
                     retry + 1, dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second);
 
       rtc.setDateTime(dt); // Set RTC time
@@ -97,18 +97,18 @@ bool updateGlobalDateTime(const DateTime &dt) {
             currentTime.hour == dt.hour &&
             currentTime.minute == dt.minute &&
             currentTime.second == dt.second) {
-              Serial.printf("RTC verification successful after %d retries.\n", retry);
+              if (debug) Serial.printf("RTC verification successful after %d retries.\n", retry);
               memcpy(&globalDateTime, &dt, sizeof(DateTime)); // Update global time after successful write
               success = true;
               break; // Exit retry loop on success
         } else {
-          Serial.printf("RTC verification failed, current time: %04d-%02d-%02d %02d:%02d:%02d, expected time: %04d-%02d-%02d %02d:%02d:%02d\n", 
+          if (debug) Serial.printf("RTC verification failed, current time: %04d-%02d-%02d %02d:%02d:%02d, expected time: %04d-%02d-%02d %02d:%02d:%02d\n", 
                   currentTime.year, currentTime.month, currentTime.day,
                   currentTime.hour, currentTime.minute, currentTime.second,
                   dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second);
         }
       } else {
-          Serial.printf("Failed to read time from RTC during verification.\n");
+          if (debug) Serial.printf("Failed to read time from RTC during verification.\n");
       }
         
       if(retry < maxRetries - 1) {
@@ -116,12 +116,12 @@ bool updateGlobalDateTime(const DateTime &dt) {
       }
   }
   if(success) {
-      Serial.printf("Time successfully set to: %04d-%02d-%02d %02d:%02d:%02d\n",
+      if (debug) Serial.printf("Time successfully set to: %04d-%02d-%02d %02d:%02d:%02d\n",
                     dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second);
       dateTimeWriteLocked = false;
       return true;
   } else {
-      Serial.printf("Failed to set RTC time after maximum retries.\n");
+      if (debug) Serial.printf("Failed to set RTC time after maximum retries.\n");
       dateTimeWriteLocked = false;
       return false;
   }

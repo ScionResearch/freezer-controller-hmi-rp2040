@@ -1,10 +1,12 @@
 #include "sys_init.h"
 
 // Global variables
-bool core0setupComplete = false;
-bool core1setupComplete = false;
+volatile bool core0setupComplete = false;
+volatile bool core1setupComplete = false;
 
-/*static uint16_t display_buf[(320 * 480)/10];
+static uint16_t display_buf[(320 * 480)/10];
+
+void init_ui(void);
 
 void dsiplay_flush_cb(lv_display_t * display, const lv_area_t * area, uint8_t * px_map) {
     uint16_t * buf16 = (uint16_t *)px_map;
@@ -38,97 +40,127 @@ void ctp_read_cb(lv_indev_t * drv, lv_indev_data_t * data) {
     }
 }
 
-static uint32_t lv_tick_cb(void) { return millis(); }*/
+static uint32_t lv_tick_cb(void) { return millis(); }
 
-uint32_t loopTS;
-bool serialReady = false;
+uint32_t rtcLoopTS;
+uint32_t sensorLoopTS;
+
+volatile bool debug = true;
 
 void setup() {
-    // Serial for debug
-    Serial.begin(115200);
-    while (!Serial);
-    Serial.println("Starting freezer control system...");
-    serialReady = true;
+    if (debug) Serial.begin(115200);
+    uint32_t startTime = millis();
 
+    while (!Serial) {
+        delay(10);
+        if (millis() - startTime > 5000) {
+            debug = false;
+            break; // Timeout after 5 seconds
+        }
+    }
+    if (debug) Serial.println("Core 0 starting...");
     // Ethernet interface on core 0 ---------->
+    init_rtc();
+    if (debug) Serial.println("RTC initialised");
+
     init_network();
+    if (debug) Serial.println("Network initialised");
+
     init_webserver();
+    if (debug) Serial.println("Webserver initialised");
 
     core0setupComplete = true;
+    if (debug) Serial.println("Core 0 startup complete, waiting for core 1 to start...");
+
+    while (!core1setupComplete) {
+        delay(1);
+    }
+
+    rtcLoopTS = millis();
 }
 
 void setup1() {
-    // Everything else on core 1 ------------->
-    while (!serialReady) {
-        ;
-    }
-    init_rtc();
+    // Everything else on core 1 ------------->   
     
+    while (!core0setupComplete) {
+        delay(100);
+    }
 
+    if (debug) Serial.println("Core 1 starting...");
+    
+    sensorInit();
+    if (debug) Serial.println("Sensor initialised");   
+
+    init_control();
+    if (debug) Serial.println("Control initialised");
+
+    init_ui();
+    if (debug) Serial.println("UI initialised");
+
+    core1setupComplete = true;
+    if (debug) Serial.println("Core 1 startup complete, entering main loop...");
+
+    sensorLoopTS = millis();
+}
+
+void loop() {
+    manageNetwork();
+
+    // 1 second loop
+    if (millis() - rtcLoopTS > 1000) {
+        rtcLoopTS += 1000;
+        manageTime();
+    }
+}
+
+
+void loop1() {
+    lv_timer_handler();
+
+    // 2 second loop
+    if (millis() - sensorLoopTS > 2000) {
+        sensorLoopTS += 2000;
+        if (!manageSensor()) {
+            if (debug) Serial.println("Error reading sensor data");
+            setIconLink(false);
+            setIconBell(true);
+        } else {
+            sensor.temperature -= 30;   // Testing only!
+            if (debug) Serial.printf("Temp: %0.2f °C| Humid: %0.2f %%RH | DP: %0.2f °C | Pres: %0.2f hPa\n", sensor.temperature, sensor.humidity, sensor.dewPoint, sensor.pressure);
+            updateProcessValues(sensor.temperature, sensor.humidity, sensor.pressure);
+            setIconLink(true);
+            setIconBell(false);
+            manage_control();
+        }
+    }
+}
+
+void init_ui(void) {
     // Init LVGL
-    /*lv_init();
+    lv_init();
     //lv_log_register_print_cb(log_print_cb);
     lv_display_t * display = lv_display_create(320, 480);
-    Serial.println("Display created and LVGL initialised");
+    //if (debug) Serial.println("Display created and LVGL initialised");
 
     displayInit();
 
     // Register display and input device drivers
     lv_display_set_flush_cb(display, dsiplay_flush_cb);
-    Serial.println("Flush callback registered");
+    //if (debug) Serial.println("Flush callback registered");
 
     lv_indev_t * indev = lv_indev_create();
     lv_indev_set_type(indev, LV_INDEV_TYPE_POINTER);
     lv_indev_set_read_cb(indev, ctp_read_cb);
     lv_indev_set_long_press_time(indev, 2000); 
-    Serial.println("CTP read callback registered");
+    //if (debug) Serial.println("CTP read callback registered");
 
     // Set screen draw buffers
     lv_display_set_buffers(display, display_buf, NULL, sizeof(display_buf), LV_DISPLAY_RENDER_MODE_PARTIAL);
 
     // Register tick timer callback
     lv_tick_set_cb(lv_tick_cb);
-    Serial.println("Tick callback registered");
+    //if (debug) Serial.println("Tick callback registered");
 
     // Setup screen
     screenMainInit();
-
-    // Start modbus interface to sensor
-    if(!sensorInit()) {
-        Serial.println("Error starting modbus interface to sensor");
-    } else {
-        Serial.println("Modbus interface to sensor started");
-        Serial.printf("Temperature: %0.2f °C| Humidity: %0.2f %%RH | Pressure: %0.2f hPa\n", sensor.temperature, sensor.humidity, sensor.pressure);
-    }
-    init_control();*/
-    core1setupComplete = true;
-    while (!core0setupComplete) {
-        ;
-    }
-    //loopTS = millis();
-}
-
-void loop() {
-    manageNetwork();
-}
-
-void loop1() {
-    manageTime();
-    delay(100);
-    /*lv_timer_handler();
-    if (millis() - loopTS > 2000) {
-        loopTS += 2000;
-        if (!manageSensor()) {
-            Serial.println("Error reading sensor data");
-            setIconLink(false);
-            setIconBell(true);
-        } else {
-            sensor.temperature -= 30;   // Testing only!
-            Serial.printf("Temperature: %0.2f °C| Humidity: %0.2f %%RH | Dew Point: %0.2f °C | Pressure: %0.2f hPa\n", sensor.temperature, sensor.humidity, sensor.dewPoint, sensor.pressure);
-            updateProcessValues(sensor.temperature, sensor.humidity, sensor.pressure);
-            setIconLink(true);
-            setIconBell(false);
-            manage_control();
-        }
-    }*/
 }

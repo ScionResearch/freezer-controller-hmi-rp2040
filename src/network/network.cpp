@@ -6,7 +6,7 @@ NetworkConfig networkConfig;
 Wiznet5500lwIP eth(PIN_ETH_CS, SPI, PIN_ETH_IRQ);
 
 // NTP update tracking
-bool ntpUpdateRequested = false;
+bool ntpUpdateRequested = true;
 uint32_t ntpUpdateTimestamp = 0 - NTP_MIN_SYNC_INTERVAL;
 uint32_t lastNTPUpdateTime = 0; // Last successful NTP update time
 
@@ -31,7 +31,7 @@ void setupEthernet()
   // Load network configuration
   if (!loadNetworkConfig()) {
     // Set default configuration if load fails
-    Serial.printf("Invalid network configuration, using defaults\n");
+    if (debug) Serial.printf("Invalid network configuration, using defaults\n");
     networkConfig.ntpEnabled = false;
     networkConfig.useDHCP = true;
     networkConfig.ip = IPAddress(192, 168, 1, 100);
@@ -43,7 +43,7 @@ void setupEthernet()
     strcpy(networkConfig.ntpServer, "pool.ntp.org");
     networkConfig.dstEnabled = false;
     saveNetworkConfig();
-  } else Serial.printf("Network configuration loaded from file system successfully\n");
+  } else if (debug) Serial.printf("Network configuration loaded from file system successfully\n");
 
   SPI.setMOSI(PIN_ETH_MOSI);
   SPI.setMISO(PIN_ETH_MISO);
@@ -51,22 +51,22 @@ void setupEthernet()
   SPI.setCS(PIN_ETH_CS);
 
   eth.setSPISpeed(80000000);
-  lwipPollingPeriod(10);
+  //lwipPollingPeriod(10);
 
   eth.hostname(networkConfig.hostname);
 
-  Serial.printf("Applying network configuration\n");
+  if (debug) Serial.printf("Applying network configuration\n");
 
   // Apply network configuration
   if (!applyNetworkConfig()) {
-    Serial.printf("Failed to apply network configuration\n");
+    if (debug) Serial.printf("Failed to apply network configuration\n");
   } else {
     // Get and store MAC address
     uint8_t mac[6];
     eth.macAddress(mac);
     snprintf(deviceMacAddress, sizeof(deviceMacAddress), "%02X:%02X:%02X:%02X:%02X:%02X",
              mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
-    Serial.printf("MAC Address: %s\n", deviceMacAddress);
+    if (debug) Serial.printf("MAC Address: %s\n", deviceMacAddress);
   }
 
   // Wait for Ethernet to connect
@@ -79,18 +79,18 @@ void setupEthernet()
   }
 
   if (eth.linkStatus() == LinkOFF) {
-    Serial.printf("Ethernet not connected\n");
+    if (debug) Serial.printf("Ethernet not connected\n");
     ethernetConnected = false;
   }
   else {
-    Serial.println("Getting IP address...");
+    if (debug) Serial.println("Getting IP address...");
     startTime = millis();
     while (!eth.connected()) {
       if (millis() - startTime > timeout) {
         break;
       }
     }
-    Serial.printf("Ethernet connected, IP address: %s, Gateway: %s\n",
+    if (debug) Serial.printf("Ethernet connected, IP address: %s, Gateway: %s\n",
                 eth.localIP().toString().c_str(),
                 eth.gatewayIP().toString().c_str());
     ethernetConnected = true;
@@ -99,17 +99,17 @@ void setupEthernet()
 
 bool loadNetworkConfig()
 {
-  Serial.printf("Loading network configuration:\n");
+  if (debug) Serial.printf("Loading network configuration:\n");
   
   // Check if LittleFS is mounted
   if (!LittleFS.begin()) {
-    Serial.printf("Failed to mount LittleFS\n");
+    if (debug) Serial.printf("Failed to mount LittleFS\n");
     return false;
   }
 
   // Check if config file exists
   if (!LittleFS.exists(CONFIG_FILENAME)) {
-    Serial.printf("Config file not found\n");
+    if (debug) Serial.printf("Config file not found\n");
     
     return false;
   }
@@ -117,7 +117,7 @@ bool loadNetworkConfig()
   // Open config file
   File configFile = LittleFS.open(CONFIG_FILENAME, "r");
   if (!configFile) {
-    Serial.printf("Failed to open config file\n");
+    if (debug) Serial.printf("Failed to open config file\n");
     
     return false;
   }
@@ -128,16 +128,16 @@ bool loadNetworkConfig()
   configFile.close();
 
   if (error) {
-    Serial.printf("Failed to parse config file: %s\n", error.c_str());
+    if (debug) Serial.printf("Failed to parse config file: %s\n", error.c_str());
     
     return false;
   }
 
   // Check magic number
   uint8_t magicNumber = doc["magic_number"] | 0;
-  Serial.printf("Magic number: %x\n", magicNumber);
+  if (debug) Serial.printf("Magic number: %x\n", magicNumber);
   if (magicNumber != CONFIG_MAGIC_NUMBER) {
-    Serial.printf("Invalid magic number\n");
+    if (debug) Serial.printf("Invalid magic number\n");
     
     return false;
   }
@@ -166,12 +166,12 @@ bool loadNetworkConfig()
 
 void saveNetworkConfig()
 {
-  Serial.printf("Saving network configuration:\n");
+  if (debug) Serial.printf("Saving network configuration:\n");
   printNetConfig(networkConfig);
   
   // Check if LittleFS is mounted
   if (!LittleFS.begin()) {
-    Serial.printf("Failed to mount LittleFS\n");
+    if (debug) Serial.printf("Failed to mount LittleFS\n");
     return;
   }
 
@@ -203,14 +203,14 @@ void saveNetworkConfig()
   // Open file for writing
   File configFile = LittleFS.open(CONFIG_FILENAME, "w");
   if (!configFile) {
-    Serial.printf("Failed to open config file for writing\n");
+    if (debug) Serial.printf("Failed to open config file for writing\n");
     
     return;
   }
   
   // Write to file
   if (serializeJson(doc, configFile) == 0) {
-    Serial.printf("Failed to write config file\n");
+    if (debug) Serial.printf("Failed to write config file\n");
   }
   
   // Close file
@@ -224,13 +224,13 @@ bool applyNetworkConfig()
     // Call eth.end() to release the DHCP lease if we already had one since last boot (handles changing networks on the fly)
     // NOTE: requires modification of end function in LwipIntDev.h, added dhcp_release_and_stop(&_netif); before netif_remove(&_netif);)
     eth.end();
-    Serial.flush();
+    if (debug) Serial.flush();
     if (!eth.begin()) {
-      Serial.printf("Failed to configure Ethernet using DHCP, falling back to 192.168.1.100\n");
+      if (debug) Serial.printf("Failed to configure Ethernet using DHCP, falling back to 192.168.1.100\n");
       IPAddress defaultIP = {192, 168, 1, 100};
       eth.config(defaultIP);
       if (!eth.begin()) return false;
-    } //else Serial.printf("Successfully configured Ethernet using DHCP\n");
+    } //else if (debug) Serial.printf("Successfully configured Ethernet using DHCP\n");
   }
   else
   {
@@ -249,29 +249,30 @@ void manageEthernet(void)
   if (ethernetConnected) {
     if (eth.linkStatus() == LinkOFF) {
       ethernetConnected = false;
-      Serial.printf("Ethernet disconnected, waiting for reconnect\n");
+      if (debug) Serial.printf("Ethernet disconnected, waiting for reconnect\n");
     } else if (!eth.connected()) {
       if (!waitingForIP) {
         waitingForIP = true;
-        Serial.printf("Waiting for IP address...\n");
+        if (debug) Serial.printf("Waiting for IP address...\n");
       }
     } else if (waitingForIP) {
       waitingForIP = false;
-      Serial.printf("Connected, IP address: %s, Gateway: %s\n",
+      if (debug) Serial.printf("Connected, IP address: %s, Gateway: %s\n",
                   eth.localIP().toString().c_str(),
                   eth.gatewayIP().toString().c_str());
     } else {
       // Ethernet is still connected
       handleWebServer();
+      handleNTPUpdates(false);
     }
   }
   else if (eth.linkStatus() == LinkON) {
     ethernetConnected = true;
     if(!applyNetworkConfig()) {
-      Serial.printf("Failed to apply network configuration!\n");
+      if (debug) Serial.printf("Failed to apply network configuration!\n");
     }
     else {
-      Serial.printf("Ethernet re-connected\n");
+      if (debug) Serial.printf("Ethernet re-connected\n");
     }
   }
 }
@@ -292,7 +293,7 @@ void ntpUpdate(void) {
   if (!eth.linkStatus()) return;
 
   if (!timeClient.update()) {
-    Serial.printf("Failed to get time from NTP server, retrying\n");
+    if (debug) Serial.printf("Failed to get time from NTP server, retrying\n");
     bool updateSuccessful = false;
     for (int i = 0; i < 3; i++) {
       if (timeClient.update()) {
@@ -302,7 +303,7 @@ void ntpUpdate(void) {
       delay(10);
    }
     if (!updateSuccessful) {
-      Serial.printf("Failed to get time from NTP server, giving up\n");
+      if (debug) Serial.printf("Failed to get time from NTP server, giving up\n");
       return;
     }
   }
@@ -321,11 +322,11 @@ void ntpUpdate(void) {
   DateTime newTime = epochToDateTime(epochTime);
   if (!updateGlobalDateTime(newTime))
   {
-    Serial.printf("Failed to update time from NTP\n");
+    if (debug) Serial.printf("Failed to update time from NTP\n");
   }
   else
   {
-    Serial.printf("Time updated from NTP server\n");
+    if (debug) Serial.printf("Time updated from NTP server\n");
     lastNTPUpdateTime = millis(); // Record the time of successful update
   }
 }
@@ -338,7 +339,7 @@ void handleNTPUpdates(bool forceUpdate) {
   if (ntpUpdateRequested || timeSinceLastUpdate > NTP_UPDATE_INTERVAL || forceUpdate)
   {
     if (timeSinceLastUpdate < NTP_MIN_SYNC_INTERVAL) {
-      Serial.printf("Time since last NTP update: %ds - skipping\n", timeSinceLastUpdate/1000);
+      if (debug) Serial.printf("Time since last NTP update: %ds - skipping\n", timeSinceLastUpdate/1000);
       return;
     }
     ntpUpdate();
@@ -350,21 +351,21 @@ void handleNTPUpdates(bool forceUpdate) {
 // Debug functions --------------------------------------------------------->
 void printNetConfig(NetworkConfig config)
 {
-  Serial.printf("Mode: %s\n", config.useDHCP ? "DHCP" : "Static");
+  if (debug) Serial.printf("Mode: %s\n", config.useDHCP ? "DHCP" : "Static");
   if (config.useDHCP) {
-    Serial.printf("IP: %s\n", eth.localIP().toString().c_str());
-    Serial.printf("Subnet: %s\n", eth.subnetMask().toString().c_str());
-    Serial.printf("Gateway: %s\n", eth.gatewayIP().toString().c_str());
-    Serial.printf("DNS: %s\n", eth.dnsIP().toString().c_str());
+    if (debug) Serial.printf("IP: %s\n", eth.localIP().toString().c_str());
+    if (debug) Serial.printf("Subnet: %s\n", eth.subnetMask().toString().c_str());
+    if (debug) Serial.printf("Gateway: %s\n", eth.gatewayIP().toString().c_str());
+    if (debug) Serial.printf("DNS: %s\n", eth.dnsIP().toString().c_str());
   } else {
-    Serial.printf("IP: %s\n", config.ip.toString().c_str());
-    Serial.printf("Subnet: %s\n", config.subnet.toString().c_str());
-    Serial.printf("Gateway: %s\n", config.gateway.toString().c_str());
-    Serial.printf("DNS: %s\n", config.dns.toString().c_str());
+    if (debug) Serial.printf("IP: %s\n", config.ip.toString().c_str());
+    if (debug) Serial.printf("Subnet: %s\n", config.subnet.toString().c_str());
+    if (debug) Serial.printf("Gateway: %s\n", config.gateway.toString().c_str());
+    if (debug) Serial.printf("DNS: %s\n", config.dns.toString().c_str());
   }
-  Serial.printf("Timezone: %s\n", config.timezone);
-  Serial.printf("Hostname: %s\n", config.hostname);
-  Serial.printf("NTP Server: %s\n", config.ntpServer);
-  Serial.printf("NTP Enabled: %s\n", config.ntpEnabled ? "true" : "false");
-  Serial.printf("DST Enabled: %s\n", config.dstEnabled ? "true" : "false");
+  if (debug) Serial.printf("Timezone: %s\n", config.timezone);
+  if (debug) Serial.printf("Hostname: %s\n", config.hostname);
+  if (debug) Serial.printf("NTP Server: %s\n", config.ntpServer);
+  if (debug) Serial.printf("NTP Enabled: %s\n", config.ntpEnabled ? "true" : "false");
+  if (debug) Serial.printf("DST Enabled: %s\n", config.dstEnabled ? "true" : "false");
 }
