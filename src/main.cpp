@@ -107,7 +107,7 @@ void setup1() {
 }
 
 void loop() {
-    manageNetwork();
+    handle_network();
     handle_modbusTCP();
 
     // 1 second loop
@@ -130,7 +130,7 @@ void loop1() {
             setIconBell(true);
         } else if (!sensorLocked) {
             sensorLocked = true;
-            sensor.temperature -= 30;   // Testing only!
+            //sensor.temperature -= 30;   // Testing only!
             if (debug) Serial.printf("Temp: %0.2f °C| Humid: %0.2f %%RH | DP: %0.2f °C | Pres: %0.2f hPa\n", sensor.temperature, sensor.humidity, sensor.dewPoint, sensor.pressure);
             updateProcessValues(sensor.temperature, sensor.humidity, sensor.pressure);
 
@@ -148,6 +148,8 @@ void loop1() {
             setIconBell(false);
             manage_control();
         }
+        // Ethernet status check
+        setIconEth(ethernetConnected);
     }
 }
 

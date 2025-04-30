@@ -17,16 +17,17 @@ bool ethernetConnected = false;
 unsigned long lastNetworkCheckTime = 0;
 
 // Network component initialisation functions ------------------------------>
-void init_network() {
-    setupEthernet();
+bool init_network() {
+    return setupEthernet();
 }
 
-void manageNetwork(void) {
+bool handle_network(void) {
     manageEthernet();
     if (networkConfig.ntpEnabled) handleNTPUpdates(false);
+    return ethernetConnected;
 }
 
-void setupEthernet()
+bool setupEthernet()
 {
   // Load network configuration
   if (!loadNetworkConfig()) {
@@ -95,6 +96,7 @@ void setupEthernet()
                 eth.gatewayIP().toString().c_str());
     ethernetConnected = true;
   }
+  return ethernetConnected;
 }
 
 bool loadNetworkConfig()

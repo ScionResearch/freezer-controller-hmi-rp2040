@@ -16,10 +16,10 @@
 #define NTP_STATUS_STALE 1
 #define NTP_STATUS_FAILED 2
 
-void init_network(void);
-void manageNetwork(void);
+bool init_network(void);
+bool handle_network(void);
 
-void setupEthernet(void);
+bool setupEthernet(void);
 bool loadNetworkConfig(void);
 void saveNetworkConfig(void);
 bool applyNetworkConfig(void);
