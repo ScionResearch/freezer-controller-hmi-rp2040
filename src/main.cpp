@@ -69,6 +69,9 @@ void setup() {
     init_webserver();
     if (debug) Serial.println("Webserver initialised");
 
+    init_modbusTCP();
+    if (debug) Serial.println("Modbus TCP initialised");
+
     core0setupComplete = true;
     if (debug) Serial.println("Core 0 startup complete, waiting for core 1 to start...");
 
@@ -105,6 +108,7 @@ void setup1() {
 
 void loop() {
     manageNetwork();
+    handle_modbusTCP();
 
     // 1 second loop
     if (millis() - rtcLoopTS > 1000) {
@@ -129,6 +133,15 @@ void loop1() {
             sensor.temperature -= 30;   // Testing only!
             if (debug) Serial.printf("Temp: %0.2f °C| Humid: %0.2f %%RH | DP: %0.2f °C | Pres: %0.2f hPa\n", sensor.temperature, sensor.humidity, sensor.dewPoint, sensor.pressure);
             updateProcessValues(sensor.temperature, sensor.humidity, sensor.pressure);
+
+            // Update the modbus TCP register buffer
+            if (!regBufLocked) {
+                regBufLocked = true;
+                memcpy(inputRegisterBuffer, &sensor, sizeof(sensor));
+                memcpy(&inputRegisterBuffer[22], &controlTempSP, sizeof(float));
+                regBufLocked = false;
+                newValues = true;
+            }
             sensorLocked = false;
             
             setIconLink(true);

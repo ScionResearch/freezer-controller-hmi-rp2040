@@ -39,15 +39,17 @@
 #include <NTPClient.h>
 #include <LittleFS.h>
 #include <ArduinoJson.h>
+#include <ArduinoModbus.h>
+#include <ModbusRTUMaster.h>
 #include <lvgl.h>
 #include <TFT_eSPI.h>
 #include <Adafruit_FT6206.h>
-#include "MCP79410.h"
-#include "ModbusRTUMaster.h"
+#include <MCP79410.h>
 
 // Header includes:
 #include "network/network.h"
 #include "web/web.h"
+#include "modbus/modbus.h"
 #include "time/rtc_manager.h"
 #include "display/display.h"
 #include "ui/screenMain.h"
