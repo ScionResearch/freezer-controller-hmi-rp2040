@@ -6,6 +6,7 @@ void init_webserver() {
     setupWebServer();
     setupNetworkAPI();
     setupTimeAPI();
+    setupControlAPI();
 }
 
 
@@ -142,6 +143,32 @@ void setupWebServer()
     
     // Perform system reboot
     rp2040.reboot();
+  });
+  
+  // Sensor data endpoint
+  server.on("/api/sensor", HTTP_GET, []() {
+    StaticJsonDocument<512> doc;
+    
+    if (!sensorLocked) {
+      doc["status"] = sensorAlarm ? "offline" : "online";
+      doc["temperature"] = sensor.temperature;
+      doc["humidity"] = sensor.humidity;
+      doc["dewPoint"] = sensor.dewPoint;
+      doc["pressure"] = sensor.pressure;
+      doc["deltaT"] = sensor.deltaT;
+      doc["deltaH"] = sensor.deltaH;
+      doc["tempSensorID_1"] = sensor.tempSensorID_1;
+      doc["tempSensorID_2"] = sensor.tempSensorID_2;
+      doc["txcount"] = sensor.txcount;
+      doc["setpoint"] = controlTempSP;
+      doc["compressorRunning"] = compressorRunning;
+    } else {
+      doc["status"] = "locked";
+    }
+    
+    String response;
+    serializeJson(doc, response);
+    server.send(200, "application/json", response);
   });
 
   // Handle static files
@@ -308,6 +335,58 @@ void setupTimeAPI()
   } );
 }
 
+void setupControlAPI()
+{
+  server.on("/api/control", HTTP_GET, []()
+            {
+        StaticJsonDocument<256> doc;
+        
+        // Get current controller configuration
+        doc["temperature_setpoint"] = controlConfig.temperatureSetpoint;
+        doc["modbus_tcp_port"] = controlConfig.modbusTcpPort;
+        doc["compressor_running"] = compressorRunning;
+        
+        String response;
+        serializeJson(doc, response);
+        server.send(200, "application/json", response); });
+
+  server.on("/api/control", HTTP_POST, []()
+            {
+              if (!server.hasArg("plain"))
+              {
+                server.send(400, "application/json", "{\"error\":\"No data received\"}");
+                return;
+              }
+
+              StaticJsonDocument<256> doc;
+              DeserializationError error = deserializeJson(doc, server.arg("plain"));
+
+              if (error)
+              {
+                server.send(400, "application/json", "{\"error\":\"Invalid JSON\"}");
+                return;
+              }
+
+              // Update control configuration
+              if (doc.containsKey("modbus_tcp_port")) {
+                uint16_t port = doc["modbus_tcp_port"];
+                if (port < 1 || port > 65535) {
+                  server.send(400, "application/json", "{\"error\":\"Invalid Modbus TCP port (1-65535)\"}");
+                  return;
+                }
+                controlConfig.modbusTcpPort = port;
+              }
+              
+              // We don't allow direct setting of temperature_setpoint through API
+              // as that's handled by the UI and saved with a delay to reduce flash wear
+
+              // Save configuration to storage
+              saveControlConfig();
+
+              // Send success response
+              server.send(200, "application/json", "{\"status\":\"success\",\"message\":\"Control configuration saved\"}");
+            });
+}
 
 // Handle web server requests
 void handleWebServer() {

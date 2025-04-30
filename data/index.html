@@ -6,6 +6,7 @@
     <link rel="icon" type="image/x-icon" href="favicon.ico">
     <title>Freezer Controller</title>
     <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
 </head>
 <body>
     <div class="container">
@@ -38,11 +39,78 @@
 
             <main>
                 <div id="dashboard" class="page active">
-                    <h1>Freezer Controller Dashboard v1.0</h1>
+                    <h1>Freezer Controller Dashboard</h1>
+                    <div class="dashboard-container">
+                        <div class="status-box">
+                            <h3>Sensor Readings</h3>
+                            <div class="sensor-readings">
+                                <div class="readings-grid">
+                                    <div class="reading-item status-item">
+                                        <div class="reading-label">Status</div>
+                                        <div class="sensor-status-indicator">
+                                            <span id="sensorStatusIcon" class="status-icon"></span>
+                                            <span id="sensorStatusText">Unknown</span>
+                                        </div>
+                                    </div>
+                                    <div class="reading-item sensor-ids">
+                                        <div class="reading-label">Sensor IDs</div>
+                                        <div class="sensor-ids-values">
+                                            <div class="id-row">ID1: <span id="tempSensor1ID">-</span></div>
+                                            <div class="id-row">ID2: <span id="tempSensor2ID">-</span></div>
+                                        </div>
+                                    </div>
+                                    <div class="reading-item temp-item">
+                                        <div class="reading-label">Temperature</div>
+                                        <div class="temp-display">
+                                            <div class="reading-value large-value" id="temperatureValue">-- °C</div>
+                                            <div class="temp-meta">
+                                                <div class="setpoint-info">
+                                                    <span>Setpoint:</span>
+                                                    <span id="tempSetpoint">-- °C</span>
+                                                </div>
+                                                <div id="compressorStatus" class="compressor-status">
+                                                    <div class="compressor-indicator"></div>
+                                                    <span class="compressor-text">Idle</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="reading-item">
+                                        <div class="reading-label">Humidity</div>
+                                        <div class="reading-value" id="humidityValue">-- %</div>
+                                    </div>
+                                    <div class="reading-item">
+                                        <div class="reading-label">Dew Point</div>
+                                        <div class="reading-value" id="dewPointValue">-- °C</div>
+                                    </div>
+                                    <div class="reading-item">
+                                        <div class="reading-label">Pressure</div>
+                                        <div class="reading-value" id="pressureValue">-- hPa</div>
+                                    </div>
+                                    <div class="reading-item">
+                                        <div class="reading-label">ΔT</div>
+                                        <div class="reading-value" id="deltaTValue">-- °C</div>
+                                    </div>
+                                    <div class="reading-item">
+                                        <div class="reading-label">ΔH</div>
+                                        <div class="reading-value" id="deltaHValue">-- %</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="chart-container">
+                            <h3>Temperature & Humidity Over Time</h3>
+                            <canvas id="sensorChart"></canvas>
+                        </div>
+                    </div>
                 </div>
 
                 <div id="settings" class="page">
-                    <h1>System Settings</h1>
+                    <div class="settings-header">
+                        <h1>System Settings</h1>
+                        <button id="rebootButton" class="btn btn-danger">Reboot</button>
+                    </div>
                     <div class="settings-section">
                         <h2>Date and Time</h2>
                         <div class="live-clock">
@@ -179,10 +247,22 @@
                             <div id="networkStatus" class="status-message"></div>
                         </form>
                     </div>
+                    <div class="settings-section">
+                        <h2>Controller Configuration</h2>
+                        <form id="controllerForm">
+                            <div class="form-group">
+                                <label>Modbus TCP Port:</label>
+                                <input type="number" id="modbusTcpPort" min="1" max="65535" value="502"
+                                       placeholder="502" title="Port number between 1-65535">
+                            </div>
+                            <button type="submit" id="saveControllerSettings" class="btn">Save Controller Settings</button>
+                        </form>
+                    </div>
                 </div>
             </main>
         </div>
     </div>
+    <div id="toastContainer" class="toast-container"></div>
     <div class="github-link-container">
         <div class="footer-info">
             <span class="version-info">Freezer Control System V1.0.0</span>

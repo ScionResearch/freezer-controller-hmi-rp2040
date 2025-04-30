@@ -212,181 +212,138 @@ h1 {
 }
 
 .modal-overlay {
+    display: none;
     position: fixed;
     top: 0;
     left: 0;
-    right: 0;
-    bottom: 0;
+    width: 100%;
+    height: 100%;
     background-color: rgba(0, 0, 0, 0.5);
-    display: flex;
+    z-index: 9999;
     justify-content: center;
     align-items: center;
-    z-index: 1000;
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 0.3s, visibility 0.3s;
 }
 
-.modal-overlay.active {
-    opacity: 1;
-    visibility: visible;
+.modal-overlay.active,
+.modal-overlay[style*="flex"] {
+    display: flex !important;
 }
 
 .confirmation-modal {
     background-color: white;
-    border-radius: 10px;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-    padding: 25px;
-    width: 90%;
-    max-width: 450px;
-    transform: translateY(-20px);
-    transition: transform 0.3s;
-}
-
-.modal-overlay.active .confirmation-modal {
-    transform: translateY(0);
+    padding: 20px;
+    border-radius: 5px;
+    max-width: 400px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
 .confirmation-modal h3 {
     margin-top: 0;
     color: #333;
-    font-size: 1.3em;
-}
-
-.confirmation-modal p {
-    color: #555;
-    margin-bottom: 25px;
 }
 
 .modal-buttons {
     display: flex;
     justify-content: flex-end;
-    gap: 15px;
-}
-
-.modal-buttons button {
-    padding: 10px 20px;
-    border: none;
-    border-radius: 6px;
-    font-size: 0.95em;
-    font-weight: 500;
-    cursor: pointer;
+    margin-top: 20px;
+    gap: 10px;
 }
 
 .modal-cancel {
-    background-color: #e0e0e0;
+    background-color: #f8f9fa;
+    border: 1px solid #ddd;
     color: #333;
-}
-
-.modal-cancel:hover {
-    background-color: #d0d0d0;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
 }
 
 .modal-confirm {
-    background-color: #f44336;
+    background-color: #d9534f;
+    border: 1px solid #d43f3a;
     color: white;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
 }
 
 .modal-confirm:hover {
-    background-color: #d32f2f;
+    background-color: #c9302c;
+    border-color: #ac2925;
 }
 
-.status-message {
-    margin-top: 10px;
-    padding: 10px;
-    border-radius: 4px;
-    text-align: center;
-    font-weight: bold;
-}
-
-.status.ok {
-    background-color: #defbe6;
-    color: #0e8521;
-}
-
-.status.error {
-    background-color: #ffebeb;
-    color: #e60000;
-}
-
-.status.warning {
-    background-color: #fff8e1;
-    color: #ff9800;
+.modal-cancel:hover {
+    background-color: #e2e6ea;
+    border-color: #dae0e5;
 }
 
 .toast-container {
     position: fixed;
     top: 20px;
     right: 20px;
-    z-index: 1000;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
     max-width: 350px;
 }
 
 .toast {
     background-color: #fff;
-    color: #333;
-    padding: 15px 20px;
     border-radius: 4px;
-    margin-bottom: 10px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    display: flex;
-    align-items: center;
-    animation: slideIn 0.3s ease-out forwards;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     overflow: hidden;
-}
-
-.toast::before {
-    content: "";
-    position: absolute;
-    left: 0;
-    top: 0;
-    height: 100%;
-    width: 5px;
+    margin-bottom: 10px;
+    animation: toast-in 0.3s ease-in-out;
+    border-left: 4px solid #ccc;
 }
 
 .toast-success {
-    border-left: 5px solid #4CAF50;
-}
-
-.toast-success::before {
-    background-color: #4CAF50;
+    border-left-color: #4caf50;
 }
 
 .toast-error {
-    border-left: 5px solid #F44336;
+    border-left-color: #f44336;
 }
 
-.toast-error::before {
-    background-color: #F44336;
+.toast-warning {
+    border-left-color: #ff9800;
 }
 
 .toast-info {
-    border-left: 5px solid #2196F3;
+    border-left-color: #2196f3;
 }
 
-.toast-info::before {
-    background-color: #2196F3;
+.toast-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 15px;
+    background-color: #f8f8f8;
+    border-bottom: 1px solid #eee;
 }
 
-.toast-icon {
-    margin-right: 10px;
-    font-size: 20px;
+.toast-header strong {
+    font-weight: 600;
 }
 
-.toast-content {
-    flex: 1;
+.toast-close {
+    background: none;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+    color: #999;
 }
 
-.toast-title {
-    font-weight: bold;
-    margin-bottom: 5px;
+.toast-close:hover {
+    color: #333;
 }
 
-.toast-message {
-    font-size: 14px;
+.toast-body {
+    padding: 10px 15px;
 }
 
-@keyframes slideIn {
+@keyframes toast-in {
     from {
         transform: translateX(100%);
         opacity: 0;
@@ -397,7 +354,7 @@ h1 {
     }
 }
 
-@keyframes slideOut {
+@keyframes toast-out {
     from {
         transform: translateX(0);
         opacity: 1;
@@ -408,11 +365,6 @@ h1 {
     }
 }
 
-.toast-exit {
-    animation: slideOut 0.3s ease-in forwards;
-}
-
-/* GitHub repository link styles */
 .github-link-container {
     margin-left: 0;
     position: fixed;
@@ -453,4 +405,270 @@ h1 {
 .github-link .github-icon {
     vertical-align: middle;
     margin-left: 20px 0;
+}
+
+/* Status message styles */
+.status-message {
+    margin-top: 10px;
+    padding: 10px;
+    border-radius: 4px;
+    text-align: center;
+    font-weight: bold;
+}
+
+.status.ok, .status.success {
+    background-color: #defbe6;
+    color: #0e8521;
+}
+
+.status.error {
+    background-color: #ffebeb;
+    color: #e60000;
+}
+
+.status.warning, .status.info {
+    background-color: #fff8e1;
+    color: #ff9800;
+}
+
+/* Dashboard Styling */
+.dashboard-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.dashboard-status {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 10px;
+}
+
+.status-box {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    width: 100%;
+}
+
+.sensor-status-indicator {
+    display: flex;
+    align-items: center;
+    margin-top: 5px;
+}
+
+.status-icon {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-right: 6px;
+    display: inline-block;
+}
+
+#sensorStatusText {
+    font-weight: bold;
+    font-size: 0.9em;
+}
+
+.status-online .status-icon {
+    background-color: #4CAF50;
+}
+
+.status-offline .status-icon {
+    background-color: #f44336;
+}
+
+.status-locked .status-icon {
+    background-color: #FF9800;
+}
+
+.sensor-readings {
+    margin-top: 15px;
+}
+
+.readings-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-auto-rows: minmax(60px, auto);
+    gap: 12px;
+}
+
+.reading-item {
+    background-color: #f5f5f5;
+    border-radius: 4px;
+    padding: 8px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+}
+
+.temp-item {
+    grid-row: span 2;
+    display: flex;
+    flex-direction: column;
+    background-color: #f0f7ff;
+    border-left: 4px solid #2196F3;
+}
+
+.temp-display {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    justify-content: space-between;
+}
+
+.large-value {
+    font-size: 2.5em;
+    line-height: 1.1;
+    color: #1976D2;
+    margin: 5px 0;
+}
+
+.temp-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-top: 5px;
+    font-size: 0.85em;
+}
+
+.setpoint-info {
+    display: flex;
+    justify-content: space-between;
+    background-color: rgba(255, 255, 255, 0.7);
+    padding: 3px 8px;
+    border-radius: 3px;
+}
+
+.setpoint-info span:last-child {
+    font-weight: bold;
+    color: #333;
+}
+
+.compressor-status {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 8px;
+    border-radius: 3px;
+    background-color: rgba(255, 255, 255, 0.7);
+}
+
+.compressor-indicator {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: #ccc;
+}
+
+.compressor-status.running .compressor-indicator {
+    background-color: #4CAF50;
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 6px rgba(76, 175, 80, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(76, 175, 80, 0);
+    }
+}
+
+.status-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.reading-label {
+    font-size: 0.85em;
+    color: #555;
+    margin-bottom: 4px;
+    font-weight: bold;
+}
+
+.reading-value {
+    font-size: 1.2em;
+    font-weight: bold;
+    color: #333;
+    font-family: monospace;
+    margin-top: auto;
+    margin-bottom: auto;
+}
+
+.sensor-ids {
+    display: flex;
+    flex-direction: column;
+}
+
+.sensor-ids-values {
+    font-size: 0.85em;
+    font-family: monospace;
+    text-align: left;
+    margin-top: auto;
+    margin-bottom: auto;
+}
+
+.id-row {
+    margin-bottom: 2px;
+}
+
+.chart-container {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-top: 10px;
+}
+
+.chart-container h3 {
+    margin-bottom: 15px;
+    color: #555;
+    text-align: center;
+}
+
+#sensorChart {
+    width: 100%;
+    height: 300px;
+    max-height: 300px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .data-row {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .dashboard-status {
+        flex-direction: column;
+    }
+}
+
+/* Settings page styles */
+.settings-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    max-width: calc(100% - 280px); /* Leave space for the logo */
+}
+
+.settings-header h1 {
+    margin: 0;
+}
+
+.btn-danger {
+    background-color: #d9534f;
+    border-color: #d43f3a;
+    color: white;
+}
+
+.btn-danger:hover {
+    background-color: #c9302c;
+    border-color: #ac2925;
 }

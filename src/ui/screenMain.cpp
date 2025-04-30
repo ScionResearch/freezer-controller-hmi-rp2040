@@ -238,7 +238,8 @@ void temperatureScaleInit(void) {
     lv_arc_set_rotation(arcSP, 135);
     lv_arc_set_bg_angles(arcSP, 0, 270);
     lv_arc_set_range(arcSP, 0, 50);
-    lv_arc_set_value(arcSP, 0);
+    float arcSPVal = (controlTempSP - 5) / -0.5;
+    lv_arc_set_value(arcSP, arcSPVal);
     lv_obj_align(arcSP, LV_ALIGN_CENTER, 0, -110);
     lv_obj_add_event_cb(arcSP, temperatureSPchanged_cb, LV_EVENT_VALUE_CHANGED, NULL);
 
@@ -418,7 +419,12 @@ static void temperatureSPchanged_cb(lv_event_t * e)
     char buf[10];
     snprintf(buf, sizeof(buf), "%.1f °C", val);
     lv_label_set_text(labelTempSP, buf);
-    controlTempSP = val;
+    static bool init = false;
+    if (!init) {
+        init = true;
+        return;
+    }
+    setTemperatureSetpoint(val);
 }
 
 static void lockUnlockEvent_cb(lv_event_t * e)
