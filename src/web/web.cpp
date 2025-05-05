@@ -295,12 +295,12 @@ void setupTimeAPI()
             }
             handleNTPUpdates(true);
             server.send(200, "application/json", "{\"status\": \"success\", \"message\": \"NTP enabled, manual time update ignored\"}");
-            saveNetworkConfig(); // Save to storage when NTP settings change
+            networkConfigToSave = true; // Save to storage when NTP settings change
             return;
           }
           if (ntpWasEnabled) {
             server.send(200, "application/json", "{\"status\": \"success\", \"message\": \"NTP disabled, manual time update required\"}");
-            saveNetworkConfig(); // Save to storage when NTP settings change
+            networkConfigToSave = true; // Save to storage when NTP settings change
           }
         }
 
@@ -343,6 +343,8 @@ void setupControlAPI()
         
         // Get current controller configuration
         doc["temperature_setpoint"] = controlConfig.temperatureSetpoint;
+        doc["compressor_on_hysteresis"] = controlConfig.compressorOnHysteresis;
+        doc["compressor_off_hysteresis"] = controlConfig.compressorOffHysteresis;
         doc["modbus_tcp_port"] = controlConfig.modbusTcpPort;
         doc["compressor_running"] = compressorRunning;
         
@@ -351,41 +353,81 @@ void setupControlAPI()
         server.send(200, "application/json", response); });
 
   server.on("/api/control", HTTP_POST, []()
-            {
-              if (!server.hasArg("plain"))
-              {
-                server.send(400, "application/json", "{\"error\":\"No data received\"}");
-                return;
-              }
+        {
+          if (!server.hasArg("plain"))
+          {
+            server.send(400, "application/json", "{\"error\":\"No data received\"}");
+            return;
+          }
 
-              StaticJsonDocument<256> doc;
-              DeserializationError error = deserializeJson(doc, server.arg("plain"));
+          StaticJsonDocument<256> doc;
+          DeserializationError error = deserializeJson(doc, server.arg("plain"));
 
-              if (error)
-              {
-                server.send(400, "application/json", "{\"error\":\"Invalid JSON\"}");
-                return;
-              }
+          if (error)
+          {
+            server.send(400, "application/json", "{\"error\":\"Invalid JSON\"}");
+            return;
+          }
 
-              // Update control configuration
-              if (doc.containsKey("modbus_tcp_port")) {
-                uint16_t port = doc["modbus_tcp_port"];
-                if (port < 1 || port > 65535) {
-                  server.send(400, "application/json", "{\"error\":\"Invalid Modbus TCP port (1-65535)\"}");
-                  return;
-                }
-                controlConfig.modbusTcpPort = port;
-              }
-              
-              // We don't allow direct setting of temperature_setpoint through API
-              // as that's handled by the UI and saved with a delay to reduce flash wear
+          if (controlConfigLocked)
+          {
+            server.send(400, "application/json", "{\"error\":\"Control configuration is locked\"}");
+            return;
+          }
+          controlConfigLocked = true;
 
-              // Save configuration to storage
-              saveControlConfig();
+          // Update control configuration
+          if (doc.containsKey("temperature_setpoint")) {
+            float tempSetpoint = doc["temperature_setpoint"];
+            if (tempSetpoint < -20 || tempSetpoint > 5) {
+              server.send(400, "application/json", "{\"error\":\"Invalid temperature setpoint (min -20, max 5)\"}");
+              controlConfigLocked = false;
+              return;
+            }
+            controlConfig.temperatureSetpoint = tempSetpoint;
+            controlTempSP = tempSetpoint;
+            // Update UI
+            if (debug) Serial.printf("Updating UI with new setpoint: %.1f\n", controlConfig.temperatureSetpoint);
+            if (debug) Serial.printf("Done\n");
+          }
+          if (doc.containsKey("compressor_on_hysteresis")) {
+            float hysteresis = doc["compressor_on_hysteresis"];
+            if (hysteresis < -4 || hysteresis > 4) {
+              server.send(400, "application/json", "{\"error\":\"Invalid compressor on hysteresis (min -4, max 4)\"}");
+              controlConfigLocked = false;
+              return;
+            }
+            controlConfig.compressorOnHysteresis = hysteresis;
+            if (debug) Serial.printf("New compressor on hysteresis: %.1f\n", controlConfig.compressorOnHysteresis);
+            
+          }
+          if (doc.containsKey("compressor_off_hysteresis")) {
+            float hysteresis = doc["compressor_off_hysteresis"];
+            if (hysteresis < -4 || hysteresis > 4) {
+              server.send(400, "application/json", "{\"error\":\"Invalid compressor off hysteresis (min -4, max 4)\"}");
+              controlConfigLocked = false;
+              return;
+            }
+            controlConfig.compressorOffHysteresis = hysteresis;
+            if (debug) Serial.printf("New compressor off hysteresis: %.1f\n", controlConfig.compressorOffHysteresis);
+          }
+          if (doc.containsKey("modbus_tcp_port")) {
+            uint16_t port = doc["modbus_tcp_port"];
+            if (port < 1 || port > 65535) {
+              server.send(400, "application/json", "{\"error\":\"Invalid Modbus TCP port (1-65535)\"}");
+              controlConfigLocked = false;
+              return;
+            }
+            controlConfig.modbusTcpPort = port;
+            if (debug) Serial.printf("New Modbus TCP port: %d\n", controlConfig.modbusTcpPort);
+          }
+          controlConfigLocked = false;
 
-              // Send success response
-              server.send(200, "application/json", "{\"status\":\"success\",\"message\":\"Control configuration saved\"}");
-            });
+          // Send success response
+          server.send(200, "application/json", "{\"status\":\"success\",\"message\":\"Control configuration saved\"}");
+          controlConfigToSave = true;
+          if (debug) Serial.printf("New control config to save\n");
+        });
 }
 
 // Handle web server requests

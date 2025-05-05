@@ -35,6 +35,7 @@ lv_color_t colourOffline;
 lv_obj_t * btnLockUnlock;
 
 bool locked = true;
+bool uiInitialised = false;
 
 static void temperatureSPchanged_cb(lv_event_t * e);
 static void lockUnlockEvent_cb(lv_event_t * e);
@@ -111,6 +112,8 @@ void screenMainInit(void) {
     humidityScaleInit();
     pressureValInit();
     alarmModalInit();
+
+    uiInitialised = true;
 }
 
 void temperatureScaleInit(void) {
@@ -415,16 +418,16 @@ void alarmModalInit(void) {
 
 static void temperatureSPchanged_cb(lv_event_t * e)
 {
-    float val = (lv_arc_get_value(arcSP)*-0.5) + 5;
+    float setpoint = (lv_arc_get_value(arcSP)*-0.5) + 5;
     char buf[10];
-    snprintf(buf, sizeof(buf), "%.1f °C", val);
+    snprintf(buf, sizeof(buf), "%.1f °C", setpoint);
     lv_label_set_text(labelTempSP, buf);
     static bool init = false;
     if (!init) {
         init = true;
         return;
     }
-    setTemperatureSetpoint(val);
+    setTemperatureSetpoint(setpoint);
 }
 
 static void lockUnlockEvent_cb(lv_event_t * e)
@@ -451,6 +454,7 @@ static void alarmAckEvent_cb(lv_event_t * e) {
 }
 
 void setIconLink(bool state) {
+    if (!uiInitialised) return;
     if (state) {
         lv_obj_set_style_img_recolor(imgLink, colourLink, LV_PART_MAIN);
     } else {
@@ -459,6 +463,7 @@ void setIconLink(bool state) {
 }
 
 void setIconEth(bool state) {
+    if (!uiInitialised) return;
     if (state) {
         lv_obj_set_style_img_recolor(imgEth, colourEth, LV_PART_MAIN);
     } else {
@@ -467,6 +472,7 @@ void setIconEth(bool state) {
 }
 
 void setIconCycle(bool state) {
+    if (!uiInitialised) return;
     if (state) {
         lv_obj_set_style_img_recolor(imgCycle, colourCycle, LV_PART_MAIN);
     } else {
@@ -475,6 +481,7 @@ void setIconCycle(bool state) {
 }
 
 void setIconBell(bool state) {
+    if (!uiInitialised) return;
     if (state) {
         lv_obj_set_style_img_recolor(imgBell, colourBell, LV_PART_MAIN);
     } else {
@@ -483,6 +490,7 @@ void setIconBell(bool state) {
 }
 
 void setAlarmState(void) {
+    if (!uiInitialised) return;
     if (sensorAlarm || controlAlarm) {
         setIconBell(true);
 
@@ -498,6 +506,7 @@ void setAlarmState(void) {
 }
 
 void updateProcessValues(float temperature, float humidity, float pressure) {
+    if (!uiInitialised) return;
     char buf[10];
     snprintf(buf, sizeof(buf), "%.1f °C", temperature);
     lv_label_set_text(labelTempPV, buf);
@@ -513,4 +522,14 @@ void updateProcessValues(float temperature, float humidity, float pressure) {
     if (arcHumidVal > 100) arcHumidVal = 100;
     lv_arc_set_value(arcPV, arcTempVal);
     lv_arc_set_value(arcHumidPV, arcHumidVal);
+}
+
+void updateSetpoint(float setpoint) {
+    if (!uiInitialised) return;
+    int32_t arcSPVal = lround((setpoint - 5) / -0.5);
+    lv_arc_set_value(arcSP, arcSPVal);
+    char buf[10];
+    snprintf(buf, sizeof(buf), "%.1f °C", setpoint);
+    lv_label_set_text(labelTempSP, buf);
+    if (debug) Serial.printf("Setpoint ARC and label updated to %s\n", buf);
 }

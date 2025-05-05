@@ -22,6 +22,6 @@ struct sensorData_t {
 bool sensorInit(void);
 bool manageSensor(void);
 
-extern bool sensorLocked;
+extern volatile bool sensorLocked;
 extern sensorData_t sensor;
-extern bool sensorAlarm;
+extern volatile bool sensorAlarm;

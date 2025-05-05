@@ -3,8 +3,8 @@
 ModbusRTUMaster bus(Serial2);
 
 sensorData_t sensor;
-bool sensorLocked = false;
-bool sensorAlarm = false;
+volatile bool sensorLocked = false;
+volatile bool sensorAlarm = false;
 uint16_t holdingRegisters[100];
 
 bool sensorInit(void) {

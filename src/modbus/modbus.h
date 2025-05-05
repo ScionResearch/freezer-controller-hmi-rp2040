@@ -3,7 +3,7 @@
 #include "sys_init.h"
 
 #define MAX_MODBUS_CLIENTS 4
-#define NUM_MODBUS_INPUT_REGISTERS 30
+#define NUM_MODBUS_INPUT_REGISTERS 35
 
 // Client management
 struct ModbusClientConnection {

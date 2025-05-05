@@ -20,8 +20,6 @@ bool init_network(void);
 bool handle_network(void);
 
 bool setupEthernet(void);
-bool loadNetworkConfig(void);
-void saveNetworkConfig(void);
 bool applyNetworkConfig(void);
 
 // NTP functions
@@ -30,27 +28,6 @@ void ntpUpdate(void);
 
 // Network management functions
 void manageEthernet(void);
-
-// Network configuration structure
-struct NetworkConfig
-{
-    IPAddress ip;
-    IPAddress subnet;
-    IPAddress gateway;
-    IPAddress dns;
-    bool useDHCP;
-    char hostname[32];
-    char ntpServer[64];
-    bool ntpEnabled;
-    char timezone[8]; // Format: "+13:00"
-    bool dstEnabled;  // Daylight Saving Time enabled
-};
-
-// Debug functions
-void printNetConfig(NetworkConfig config);
-
-// Global variables
-extern NetworkConfig networkConfig;
 
 extern Wiznet5500lwIP eth;
 

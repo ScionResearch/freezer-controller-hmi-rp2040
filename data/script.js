@@ -562,6 +562,9 @@ async function loadControllerSettings() {
         const response = await fetch('/api/control');
         const data = await response.json();
         
+        document.getElementById('temperatureSetpoint').value = data.temperature_setpoint.toFixed(1) || 0;
+        document.getElementById('compressorOnHysteresis').value = data.compressor_on_hysteresis.toFixed(2) || 0;
+        document.getElementById('compressorOffHysteresis').value = data.compressor_off_hysteresis.toFixed(2) || 0;
         document.getElementById('modbusTcpPort').value = data.modbus_tcp_port || 502;
     } catch (error) {
         console.error('Error loading controller settings:', error);
@@ -572,13 +575,41 @@ async function saveControllerSettings(e) {
     if (e) e.preventDefault();
     
     // Get form values
+    const temperatureSetpoint = parseFloat(document.getElementById('temperatureSetpoint').value);
+    const compressorOnHysteresis = parseFloat(document.getElementById('compressorOnHysteresis').value);
+    const compressorOffHysteresis = parseFloat(document.getElementById('compressorOffHysteresis').value);
     const modbusTcpPort = parseInt(document.getElementById('modbusTcpPort').value, 10);
+
+    // Validate temperature setpoint
+    if (isNaN(temperatureSetpoint) || temperatureSetpoint < -20 || temperatureSetpoint > 5) {
+        showToast('error', 'Validation Error', 'Invalid temperature setpoint. Must be between -20 and 5.');
+        return;
+    }
+    
+    // Validate compressor on hysteresis
+    if (isNaN(compressorOnHysteresis) || compressorOnHysteresis < -4 || compressorOnHysteresis > 4) {
+        showToast('error', 'Validation Error', 'Invalid compressor on hysteresis. Must be between -4 and 4.');
+        return;
+    }
+    
+    // Validate compressor off hysteresis
+    if (isNaN(compressorOffHysteresis) || compressorOffHysteresis < -4 || compressorOffHysteresis > 4) {
+        showToast('error', 'Validation Error', 'Invalid compressor off hysteresis. Must be between -4 and 4.');
+        return;
+    }
     
     // Validate port number
     if (isNaN(modbusTcpPort) || modbusTcpPort < 1 || modbusTcpPort > 65535) {
         showToast('error', 'Validation Error', 'Invalid Modbus TCP port. Must be between 1 and 65535.');
         return;
     }
+
+    console.log('Saving controller settings: ' + JSON.stringify({
+        temperature_setpoint: temperatureSetpoint,
+        compressor_on_hysteresis: compressorOnHysteresis,
+        compressor_off_hysteresis: compressorOffHysteresis,
+        modbus_tcp_port: modbusTcpPort
+    }));
     
     try {
         const response = await fetch('/api/control', {
@@ -587,6 +618,9 @@ async function saveControllerSettings(e) {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
+                temperature_setpoint: temperatureSetpoint,
+                compressor_on_hysteresis: compressorOnHysteresis,
+                compressor_off_hysteresis: compressorOffHysteresis,
                 modbus_tcp_port: modbusTcpPort
             })
         });

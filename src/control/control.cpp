@@ -2,33 +2,48 @@
 
 // Global variables
 float controlTempSP = 0.0f;
-bool controlAlarm = false;
-bool compressorRunning = false;
+float compressorOnHysteresis = 0.5f;
+float compressorOffHysteresis = 0.5f;
+volatile bool controlAlarm = false;
+volatile bool compressorRunning = false;
 uint32_t compressorStartTS = 0;
 uint32_t compressorStopTS = 0 - COMPRESSOR_OFF_TIME_MIN_ms;
-ControlConfig controlConfig = {
-    .temperatureSetpoint = 0.0f,
-    .modbusTcpPort = DEFAULT_MODBUS_TCP_PORT
-};
 uint32_t lastSetpointChangeTime = 0;
-bool setpointNeedsSaving = false;
+volatile bool setpointNeedsSaving = false;
+volatile bool newSetpointReceived = false;
 
 void init_control(void) {
     pinMode(PIN_COMPRESSOR_EN, OUTPUT);
     digitalWrite(PIN_COMPRESSOR_EN, LOW);
     
     // Load control configuration
-    if (loadControlConfig()) {
-        // Set the temperature setpoint from config
-        controlTempSP = controlConfig.temperatureSetpoint;
+    if (!controlConfigLoaded) {
+        if (debug) Serial.println("ERROR: Control configuration not loaded, init config first!");
+        return;
     }
+    while (controlConfigLocked) delay(100);
+    controlConfigLocked = true;
+    controlTempSP = controlConfig.temperatureSetpoint;
+    compressorOnHysteresis = controlConfig.compressorOnHysteresis;
+    compressorOffHysteresis = controlConfig.compressorOffHysteresis;
+    newSetpointReceived = true;
+    controlConfigLocked = false;
 }
 
-void manage_control(void) {
+void handle_control(void) {
+    if (newControlConfig && !controlConfigLocked) {
+        controlConfigLocked = true;
+        controlTempSP = controlConfig.temperatureSetpoint;
+        compressorOnHysteresis = controlConfig.compressorOnHysteresis;
+        compressorOffHysteresis = controlConfig.compressorOffHysteresis;
+        controlConfigLocked = false;
+        newControlConfig = false;
+        updateSetpoint(controlTempSP);
+    }
     // Check if we need to save the setpoint after a change
     if (setpointNeedsSaving && (millis() - lastSetpointChangeTime > 10000)) {
         setpointNeedsSaving = false;
-        saveControlConfig();
+        controlConfigToSave = true;
     }
     
     if (sensorLocked) return;
@@ -40,7 +55,7 @@ void manage_control(void) {
         }
         
         bool stop = false;
-        if (sensor.temperature < (controlTempSP - COMPRESSOR_HYSTERESIS_DEG_C)) stop = true;
+        if (sensor.temperature < (controlTempSP - controlConfig.compressorOffHysteresis)) stop = true;
         else if ((millis() - compressorStartTS) > COMPRESSOR_ON_TIME_MAX_ms) {
             control_alarm_check();  // Compressor timed out, check if we are cooling effectively
             stop = true;
@@ -57,7 +72,7 @@ void manage_control(void) {
             return;
         }
         
-        if (sensor.temperature > (controlTempSP + COMPRESSOR_HYSTERESIS_DEG_C)) {
+        if (sensor.temperature > (controlTempSP + controlConfig.compressorOnHysteresis)) {
             compressorRunning = true;
             compressorStartTS = millis();
             digitalWrite(PIN_COMPRESSOR_EN, HIGH);
@@ -79,85 +94,11 @@ void control_alarm_check(void) {
 
 // Call this function when the setpoint is changed by the UI
 void setTemperatureSetpoint(float newSetpoint) {
+    if (controlConfigLocked) return;
+    controlConfigLocked = true;
     controlTempSP = newSetpoint;
     controlConfig.temperatureSetpoint = newSetpoint;
+    controlConfigLocked = false;
     lastSetpointChangeTime = millis();
     setpointNeedsSaving = true;
-}
-
-// Load control configuration from LittleFS
-bool loadControlConfig() {
-    // Check if LittleFS is mounted
-    if (!LittleFS.begin()) {
-        if (debug) Serial.printf("Failed to mount LittleFS\n");
-        return false;
-    }
-    
-    // Check if the config file exists
-    if (!LittleFS.exists(CONTROL_CONFIG_FILENAME)) {
-        if (debug) Serial.printf("Control config file not found, using defaults\n");
-        saveControlConfig(); // Save defaults
-        return false;
-    }
-    
-    // Open the file for reading
-    File configFile = LittleFS.open(CONTROL_CONFIG_FILENAME, "r");
-    if (!configFile) {
-        if (debug) Serial.printf("Failed to open control config file for reading\n");
-        return false;
-    }
-    
-    // Parse JSON content
-    StaticJsonDocument<256> doc;
-    DeserializationError error = deserializeJson(doc, configFile);
-    configFile.close();
-    
-    if (error) {
-        if (debug) Serial.printf("Failed to parse control config JSON: %s\n", error.c_str());
-        return false;
-    }
-    
-    // Extract configuration values
-    controlConfig.temperatureSetpoint = doc["temperature_setpoint"] | 0.0f;
-    controlConfig.modbusTcpPort = doc["modbus_tcp_port"] | DEFAULT_MODBUS_TCP_PORT;
-    
-    if (debug) Serial.printf("Loaded control config: temp_sp=%.1f, modbus_port=%d\n", 
-                controlConfig.temperatureSetpoint, controlConfig.modbusTcpPort);
-    
-    return true;
-}
-
-// Save control configuration to LittleFS
-void saveControlConfig() {
-    if (debug) Serial.printf("Saving control configuration...\n");
-    
-    // Check if LittleFS is mounted
-    if (!LittleFS.begin()) {
-        if (debug) Serial.printf("Failed to mount LittleFS\n");
-        return;
-    }
-    
-    // Create JSON document
-    StaticJsonDocument<256> doc;
-    
-    // Store configuration values
-    doc["temperature_setpoint"] = controlConfig.temperatureSetpoint;
-    doc["modbus_tcp_port"] = controlConfig.modbusTcpPort;
-    
-    // Open file for writing
-    File configFile = LittleFS.open(CONTROL_CONFIG_FILENAME, "w");
-    if (!configFile) {
-        if (debug) Serial.printf("Failed to open control config file for writing\n");
-        return;
-    }
-    
-    // Write to file
-    if (serializeJson(doc, configFile) == 0) {
-        if (debug) Serial.printf("Failed to write control config file\n");
-    } else {
-        if (debug) Serial.printf("Control config saved successfully\n");
-    }
-    
-    // Close file
-    configFile.close();
 }

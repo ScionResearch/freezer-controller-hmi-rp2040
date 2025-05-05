@@ -47,13 +47,15 @@
 #include <MCP79410.h>
 
 // Header includes:
-#include "network/network.h"
-#include "web/web.h"
-#include "modbus/modbus.h"
-#include "time/rtc_manager.h"
-#include "display/display.h"
-#include "ui/screenMain.h"
-#include "sensor/sensor.h"
+#include "config/config.h"
 #include "control/control.h"
+#include "display/display.h"
+#include "modbus/modbus.h"
+#include "network/network.h"
+#include "sensor/sensor.h"
+#include "time/rtc_manager.h"
+#include "ui/ui.h"
+#include "ui/screenMain.h"
+#include "web/web.h"
 
 extern volatile bool debug;

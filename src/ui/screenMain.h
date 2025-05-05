@@ -11,6 +11,7 @@ void humidityScaleInit(void);
 void pressureValInit(void);
 void alarmModalInit(void);
 void updateProcessValues(float temperature, float humidity, float pressure);
+void updateSetpoint(float setpoint);
 void setIconLink(bool state);
 void setIconEth(bool state);
 void setIconCycle(bool state);
