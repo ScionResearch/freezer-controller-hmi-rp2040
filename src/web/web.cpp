@@ -345,6 +345,7 @@ void setupControlAPI()
         doc["temperature_setpoint"] = controlConfig.temperatureSetpoint;
         doc["compressor_on_hysteresis"] = controlConfig.compressorOnHysteresis;
         doc["compressor_off_hysteresis"] = controlConfig.compressorOffHysteresis;
+        doc["fan_speed"] = controlConfig.fanSpeed;
         doc["modbus_tcp_port"] = controlConfig.modbusTcpPort;
         doc["compressor_running"] = compressorRunning;
         
@@ -410,6 +411,16 @@ void setupControlAPI()
             }
             controlConfig.compressorOffHysteresis = hysteresis;
             if (debug) Serial.printf("New compressor off hysteresis: %.1f\n", controlConfig.compressorOffHysteresis);
+          }
+          if (doc.containsKey("fan_speed")) {
+            uint8_t fanSpeed = doc["fan_speed"];
+            if (fanSpeed > 100) {
+              server.send(400, "application/json", "{\"error\":\"Invalid fan speed (min 0, max 100)\"}");
+              controlConfigLocked = false;
+              return;
+            }
+            controlConfig.fanSpeed = fanSpeed;
+            if (debug) Serial.printf("New fan speed: %.1f\n", controlConfig.fanSpeed);
           }
           if (doc.containsKey("modbus_tcp_port")) {
             uint16_t port = doc["modbus_tcp_port"];

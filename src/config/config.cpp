@@ -106,10 +106,11 @@ bool loadControlConfig() {
     controlConfig.temperatureSetpoint = doc["temperature_setpoint"] | 0.0f;
     controlConfig.compressorOnHysteresis = doc["compressor_on_hysteresis"] | COMPRESSOR_HYSTERESIS_DEG_C;
     controlConfig.compressorOffHysteresis = doc["compressor_off_hysteresis"] | COMPRESSOR_HYSTERESIS_DEG_C;
+    controlConfig.fanSpeed = doc["fan_speed"] | DEFAULT_FAN_SPEED;
     controlConfig.modbusTcpPort = doc["modbus_tcp_port"] | DEFAULT_MODBUS_TCP_PORT;
     
-    if (debug) Serial.printf("Loaded control config: temp_sp=%.1f, on hyst=%f, off hyst=%f, modbus_port=%d\n", 
-                controlConfig.temperatureSetpoint, controlConfig.compressorOnHysteresis, controlConfig.compressorOffHysteresis, controlConfig.modbusTcpPort);
+    if (debug) Serial.printf("Loaded control config: temp_sp=%.1f, on hyst=%f, off hyst=%f, fan speed=%d, modbus_port=%d\n", 
+                controlConfig.temperatureSetpoint, controlConfig.compressorOnHysteresis, controlConfig.compressorOffHysteresis, controlConfig.fanSpeed, controlConfig.modbusTcpPort);
     
     return true;
 }
@@ -130,6 +131,7 @@ void saveControlConfig() {
     doc["temperature_setpoint"] = controlConfig.temperatureSetpoint;
     doc["compressor_on_hysteresis"] = controlConfig.compressorOnHysteresis;
     doc["compressor_off_hysteresis"] = controlConfig.compressorOffHysteresis;
+    doc["fan_speed"] = controlConfig.fanSpeed;
     doc["modbus_tcp_port"] = controlConfig.modbusTcpPort;
     
     // Open file for writing

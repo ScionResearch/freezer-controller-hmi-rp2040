@@ -11,6 +11,7 @@ struct ControlConfig {
     float temperatureSetpoint;
     float compressorOnHysteresis;
     float compressorOffHysteresis;
+    uint8_t fanSpeed;
     uint16_t modbusTcpPort;
 };
 

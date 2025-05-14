@@ -565,6 +565,7 @@ async function loadControllerSettings() {
         document.getElementById('temperatureSetpoint').value = data.temperature_setpoint.toFixed(1) || 0;
         document.getElementById('compressorOnHysteresis').value = data.compressor_on_hysteresis.toFixed(2) || 0;
         document.getElementById('compressorOffHysteresis').value = data.compressor_off_hysteresis.toFixed(2) || 0;
+        document.getElementById('fanSpeed').value = data.fan_speed || 0;
         document.getElementById('modbusTcpPort').value = data.modbus_tcp_port || 502;
     } catch (error) {
         console.error('Error loading controller settings:', error);
@@ -578,6 +579,7 @@ async function saveControllerSettings(e) {
     const temperatureSetpoint = parseFloat(document.getElementById('temperatureSetpoint').value);
     const compressorOnHysteresis = parseFloat(document.getElementById('compressorOnHysteresis').value);
     const compressorOffHysteresis = parseFloat(document.getElementById('compressorOffHysteresis').value);
+    const fanSpeed = parseInt(document.getElementById('fanSpeed').value, 10);
     const modbusTcpPort = parseInt(document.getElementById('modbusTcpPort').value, 10);
 
     // Validate temperature setpoint
@@ -597,6 +599,12 @@ async function saveControllerSettings(e) {
         showToast('error', 'Validation Error', 'Invalid compressor off hysteresis. Must be between -4 and 4.');
         return;
     }
+
+    // Validate fan speed
+    if (isNaN(fanSpeed) || fanSpeed < 0 || fanSpeed > 100) {
+        showToast('error', 'Validation Error', 'Invalid fan speed. Must be between 0 and 100.');
+        return;
+    }
     
     // Validate port number
     if (isNaN(modbusTcpPort) || modbusTcpPort < 1 || modbusTcpPort > 65535) {
@@ -608,6 +616,7 @@ async function saveControllerSettings(e) {
         temperature_setpoint: temperatureSetpoint,
         compressor_on_hysteresis: compressorOnHysteresis,
         compressor_off_hysteresis: compressorOffHysteresis,
+        fan_speed: fanSpeed,
         modbus_tcp_port: modbusTcpPort
     }));
     
@@ -621,6 +630,7 @@ async function saveControllerSettings(e) {
                 temperature_setpoint: temperatureSetpoint,
                 compressor_on_hysteresis: compressorOnHysteresis,
                 compressor_off_hysteresis: compressorOffHysteresis,
+                fan_speed: fanSpeed,
                 modbus_tcp_port: modbusTcpPort
             })
         });

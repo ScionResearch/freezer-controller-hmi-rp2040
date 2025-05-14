@@ -15,6 +15,8 @@ volatile bool newSetpointReceived = false;
 void init_control(void) {
     pinMode(PIN_COMPRESSOR_EN, OUTPUT);
     digitalWrite(PIN_COMPRESSOR_EN, LOW);
+
+    pinMode(PIN_FAN, OUTPUT);
     
     // Load control configuration
     if (!controlConfigLoaded) {
@@ -26,6 +28,7 @@ void init_control(void) {
     controlTempSP = controlConfig.temperatureSetpoint;
     compressorOnHysteresis = controlConfig.compressorOnHysteresis;
     compressorOffHysteresis = controlConfig.compressorOffHysteresis;
+    setFanSpeed(controlConfig.fanSpeed);
     newSetpointReceived = true;
     controlConfigLocked = false;
 }
@@ -39,6 +42,7 @@ void handle_control(void) {
         controlConfigLocked = false;
         newControlConfig = false;
         updateSetpoint(controlTempSP);
+        setFanSpeed(controlConfig.fanSpeed);
     }
     // Check if we need to save the setpoint after a change
     if (setpointNeedsSaving && (millis() - lastSetpointChangeTime > 10000)) {
@@ -92,7 +96,6 @@ void control_alarm_check(void) {
     setAlarmState();
 }
 
-// Call this function when the setpoint is changed by the UI
 void setTemperatureSetpoint(float newSetpoint) {
     if (controlConfigLocked) return;
     controlConfigLocked = true;
@@ -101,4 +104,10 @@ void setTemperatureSetpoint(float newSetpoint) {
     controlConfigLocked = false;
     lastSetpointChangeTime = millis();
     setpointNeedsSaving = true;
+}
+
+void setFanSpeed(uint8_t speed) {
+    if (speed > 100) speed = 100;
+    if (speed == 0) analogWrite(PIN_FAN, 0);
+    else analogWrite(PIN_FAN, map(speed, 0, 100, 75, 255));
 }

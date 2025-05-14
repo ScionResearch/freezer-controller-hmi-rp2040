@@ -30,7 +30,7 @@
 #define PIN_V_PSU      26
 #define PIN_V_5V       27
 #define PIN_COMPRESSOR_EN    28
-#define PIN_AUX    29
+#define PIN_FAN    29
 
 // Lib includes:
 #include <Arduino.h>

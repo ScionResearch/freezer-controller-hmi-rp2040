@@ -11,6 +11,8 @@
 #define COMPRESSOR_HYSTERESIS_DEG_C     0.5f
 #define EXPECTED_DELTA_T_OVER_MAX_RUN_TIME  5.0f    // Minimum expected temperature change over maximum run time (for alarm detection)
 
+#define DEFAULT_FAN_SPEED               50
+
 // Control configuration filename and default modbus port
 #define DEFAULT_MODBUS_TCP_PORT 502
 
@@ -21,6 +23,7 @@ void init_control(void);
 void handle_control(void);
 void control_alarm_check(void);
 void setTemperatureSetpoint(float newSetpoint);
+void setFanSpeed(uint8_t speed);
 
 // Global variables
 extern float controlTempSP;
